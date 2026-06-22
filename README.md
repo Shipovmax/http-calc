@@ -1,6 +1,12 @@
-# http-calc — HTTP-калькулятор на Go
+# http-calc — HTTP Калькулятор
 
-> REST API-сервер на чистом `net/http`. Учебный проект #2 в рамках подготовки к позиции Go Backend Developer.
+> REST API на чистом `net/http` + React-фронтенд. Учебный проект #2 в рамках подготовки к позиции Go Backend Developer.
+
+---
+
+## Демо
+
+![Калькулятор](https://github.com/Shipovmax/http-calc/raw/main/docs/preview.png)
 
 ---
 
@@ -10,95 +16,91 @@
 
 Второй проект в roadmap — переход от CLI к HTTP. Та же логика калькулятора из проекта #1, но теперь обёрнутая в REST API: сервер принимает JSON-запрос, считает, возвращает JSON-ответ. Это фундаментальный паттерн любого backend-сервиса.
 
-Главная цель — освоить стандартный `net/http` без фреймворков: роутинг, парсинг JSON из тела запроса, формирование JSON-ответа, коды статусов HTTP, и middleware для логирования. Именно так работает большинство внутренних сервисов в Ozon и WB — Go + `net/http` или минимальный роутер поверх него.
+Главная цель — освоить стандартный `net/http` без фреймворков: роутинг, парсинг JSON, формирование ответа, HTTP-статусы, middleware. Именно так работает большинство внутренних сервисов в Ozon и WB.
 
-Проект намеренно обходится без `gin`, `echo`, `chi` — чтобы понять что происходит под капотом этих фреймворков, прежде чем их использовать.
+React-фронтенд добавлен как UI-слой поверх API — демонстрирует реальное взаимодействие браузер ↔ Go-сервер через CORS.
 
 ### Что демонстрирует этот проект
 
 | Навык | Реализация |
 |---|---|
 | HTTP-сервер | `net/http`, `http.ListenAndServe`, `http.ServeMux` |
-| Роутинг | регистрация хендлеров через `mux.HandleFunc` |
-| JSON decode/encode | `encoding/json`, `json.NewDecoder`, `json.NewEncoder` |
-| HTTP статус-коды | `http.StatusOK`, `http.StatusBadRequest`, `http.StatusMethodNotAllowed` |
-| Middleware | логирующий middleware через `http.Handler` обёртку |
+| Роутинг с методом | `"POST /calculate"` через Go 1.22+ паттерн |
+| JSON decode/encode | `json.NewDecoder`, `json.NewEncoder` |
+| HTTP статус-коды | 200, 400, 405 |
+| Middleware цепочка | logging → CORS → handler |
+| CORS | preflight OPTIONS + заголовки для React dev-сервера |
 | Разделение ответственности | handler / calculator / middleware в отдельных файлах |
-| Обработка ошибок | единый формат JSON-ошибки для всех случаев |
+| React-фронтенд | Vite + React, fetch API, live preview запроса |
 
 ### Стек
 
-- **Язык:** Go 1.22+
-- **Зависимости:** только стандартная библиотека
-- **Платформа:** Linux / macOS / Windows
+- **Backend:** Go 1.22+, только стандартная библиотека
+- **Frontend:** React + Vite (без UI-фреймворков)
+- **Зависимости:** нет внешних Go-пакетов
 
 ---
 
 ## Для разработчика
 
-### Архитектурные решения
-
-#### Почему `net/http` без фреймворка?
-
-`gin` и `echo` — тонкие обёртки над `net/http`. Зная стандартную библиотеку, ты понимаешь что делает фреймворк. Не зная — используешь магию. На собеседовании в BigTech спросят именно про `net/http`.
-
-#### Почему `http.ServeMux`, а не глобальный `DefaultServeMux`?
-
-```go
-// Плохо — глобальное состояние, нельзя тестировать изолированно
-http.HandleFunc("/calculate", handler)
-http.ListenAndServe(":8080", nil)
-
-// Хорошо — явный mux, можно передавать в httptest.NewServer
-mux := http.NewServeMux()
-mux.HandleFunc("POST /calculate", handler)
-http.ListenAndServe(":8080", mux)
-```
-
-#### Почему единый формат JSON-ошибки?
-
-Клиент обязан знать структуру ответа заранее — и для успеха, и для ошибки. Смешивать строку ошибки и объект результата — антипаттерн.
-
-```json
-// Успех
-{"result": 15}
-
-// Ошибка
-{"error": "деление на ноль"}
-```
-
-Один и тот же клиентский код обрабатывает оба случая: проверяй поле `error`, если пустое — читай `result`.
-
-#### Почему метод проверяется в хендлере, а не в роутере?
-
-В Go 1.22+ `ServeMux` поддерживает `"POST /calculate"` прямо в паттерне. Используй это — не городи `if r.Method != "POST"` внутри хендлера.
-
-#### Почему middleware для логирования, а не `log.Println` в каждом хендлере?
-
-Сквозная функциональность (логирование, аутентификация, метрики) не должна быть размазана по бизнес-логике. Middleware оборачивает любой `http.Handler` и работает для всех эндпоинтов сразу — это основа production-архитектуры.
-
 ### Структура
 
 ```
 http-calc/
-├── main.go          # точка входа: создание mux, регистрация хендлеров, запуск сервера
-├── handler.go       # HTTP-хендлер: decode запроса, вызов calculate, encode ответа
-├── calculator.go    # бизнес-логика: функция calculate, не знает про HTTP
-├── middleware.go    # логирующий middleware
-├── go.mod
+├── main.go          # точка входа: mux, регистрация хендлеров, запуск сервера
+├── handler.go       # HTTP-хендлер: decode → calculate → encode
+├── calculator.go    # бизнес-логика: calculate(a, op, b), ничего про HTTP
+├── middleware.go    # loggingMiddleware + corsMiddleware
+├── go.mod           # только module и go директивы
+├── frontend/        # React-приложение (Vite)
+│   └── src/
+│       ├── App.jsx  # калькулятор UI
+│       └── App.css  # стили
 └── README.md
 ```
 
-### Установка и запуск
+### Архитектурные решения
 
-```bash
-git clone https://github.com/Shipovmax/http-calc
-cd http-calc
-go run .
-# Сервер запущен на :8080
+#### Почему `net/http` без фреймворка?
+
+`gin` и `echo` — тонкие обёртки над `net/http`. Зная стандартную библиотеку, понимаешь что делает фреймворк. На собеседовании в BigTech спросят именно про `net/http`.
+
+#### Почему middleware цепочка, а не один обработчик?
+
+```go
+loggingMiddleware(corsMiddleware(mux))
 ```
 
-### Использование
+Каждый middleware отвечает за одно — принцип единственной ответственности. Легко добавить auth, rate-limit или tracing без изменения бизнес-логики.
+
+#### Почему `*float64` в Response?
+
+```go
+type Response struct {
+    Result *float64 `json:"result,omitempty"`
+    Error  string   `json:"error,omitempty"`
+}
+```
+
+`omitempty` со значением `0.0` выкинет поле из JSON. Указатель позволяет отличить "результат равен нулю" от "поле не задано".
+
+### Запуск
+
+**Сервер:**
+```bash
+go run .
+# → сервер на :8080
+```
+
+**Фронтенд:**
+```bash
+cd frontend
+npm install
+npm run dev
+# → открой http://localhost:5173
+```
+
+### API
 
 ```
 POST /calculate
@@ -107,52 +109,39 @@ Content-Type: application/json
 {"a": <число>, "op": "<оператор>", "b": <число>}
 ```
 
-**Поддерживаемые операторы:** `+` `-` `*` `/`
+**Операторы:** `+` `-` `*` `/`
 
 ### Примеры
 
 ```bash
+# Сложение
 curl -s -X POST http://localhost:8080/calculate \
   -H "Content-Type: application/json" \
   -d '{"a": 10, "op": "+", "b": 5}'
 # {"result":15}
 
+# Деление
 curl -s -X POST http://localhost:8080/calculate \
-  -H "Content-Type: application/json" \
   -d '{"a": 10, "op": "/", "b": 3}'
 # {"result":3.3333333333333335}
-
-curl -s -X POST http://localhost:8080/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"a": -5, "op": "*", "b": 2}'
-# {"result":-10}
 ```
 
 ### Обработка ошибок
 
 ```bash
-# Деление на ноль
-curl -s -X POST http://localhost:8080/calculate \
-  -d '{"a": 10, "op": "/", "b": 0}'
-# HTTP 400: {"error":"деление на ноль"}
+# Деление на ноль → HTTP 400
+curl -s -X POST http://localhost:8080/calculate -d '{"a":10,"op":"/","b":0}'
+# {"error":"деление на ноль"}
 
-# Неизвестный оператор
-curl -s -X POST http://localhost:8080/calculate \
-  -d '{"a": 10, "op": "^", "b": 2}'
-# HTTP 400: {"error":"неизвестный оператор: ^"}
+# Неизвестный оператор → HTTP 400
+curl -s -X POST http://localhost:8080/calculate -d '{"a":10,"op":"^","b":2}'
+# {"error":"неизвестный оператор: ^"}
 
-# Некорректный JSON
-curl -s -X POST http://localhost:8080/calculate \
-  -d 'not json'
-# HTTP 400: {"error":"некорректный JSON"}
+# Невалидный JSON → HTTP 400
+curl -s -X POST http://localhost:8080/calculate -d 'not json'
+# {"error":"некорректный JSON"}
 
-# Неверный метод
+# GET запрос → HTTP 405
 curl -s -X GET http://localhost:8080/calculate
-# HTTP 405: Method Not Allowed
-```
-
-### Запуск без сборки
-
-```bash
-go run .
+# Method Not Allowed
 ```

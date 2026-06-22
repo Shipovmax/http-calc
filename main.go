@@ -12,7 +12,7 @@ func main() {
 	mux.HandleFunc("POST /calculate", calculateHandler)
 
 	log.Println("сервер запущен на :8080")
-	if err := http.ListenAndServe(":8080", loggingMiddleware(mux)); err != nil {
+	if err := http.ListenAndServe(":8080", loggingMiddleware(corsMiddleware(mux))); err != nil {
 		log.Fatal(err)
 	}
 }
