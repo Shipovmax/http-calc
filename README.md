@@ -4,12 +4,6 @@
 
 ---
 
-## Демо
-
-![Калькулятор](https://github.com/Shipovmax/http-calc/raw/main/docs/preview.png)
-
----
-
 ## Для рекрутера
 
 ### Что это и зачем
