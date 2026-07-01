@@ -1,97 +1,106 @@
-# http-calc — HTTP Калькулятор
+# http-calc — HTTP Calculator
 
-> REST API на чистом `net/http` + React-фронтенд. Учебный проект #2 в рамках подготовки к позиции Go Backend Developer.
+> A REST API using pure `net/http` + a React frontend. Learning Project #2 as part of preparation for a Go Backend Developer role.
 
 ---
 
-## Для рекрутера
+## For the Recruiter
 
-### Что это и зачем
+### What It Is and Why
 
-Второй проект в roadmap — переход от CLI к HTTP. Та же логика калькулятора из проекта #1, но теперь обёрнутая в REST API: сервер принимает JSON-запрос, считает, возвращает JSON-ответ. Это фундаментальный паттерн любого backend-сервиса.
+The second project in the roadmap marks the transition from CLI to HTTP. It utilizes the same calculator logic from project #1, but now wrapped in a REST API: the server accepts a JSON request, performs the calculation, and returns a JSON response. This is a fundamental pattern for any backend service.
 
-Главная цель — освоить стандартный `net/http` без фреймворков: роутинг, парсинг JSON, формирование ответа, HTTP-статусы, middleware. Именно так работает большинство внутренних сервисов в Ozon и WB.
+The main goal is to master the standard `net/http` library without external frameworks: routing, JSON parsing, response building, HTTP status codes, and middleware. This is exactly how most internal services at major tech companies operate.
 
-React-фронтенд добавлен как UI-слой поверх API — демонстрирует реальное взаимодействие браузер ↔ Go-сервер через CORS.
+A React frontend is added as a UI layer on top of the API, demonstrating real-world browser-to-Go-server interaction via CORS.
 
-### Что демонстрирует этот проект
+### What This Project Demonstrates
 
-| Навык | Реализация |
+| Skill | Implementation |
 |---|---|
-| HTTP-сервер | `net/http`, `http.ListenAndServe`, `http.ServeMux` |
-| Роутинг с методом | `"POST /calculate"` через Go 1.22+ паттерн |
-| JSON decode/encode | `json.NewDecoder`, `json.NewEncoder` |
-| HTTP статус-коды | 200, 400, 405 |
-| Middleware цепочка | logging → CORS → handler |
-| CORS | preflight OPTIONS + заголовки для React dev-сервера |
-| Разделение ответственности | handler / calculator / middleware в отдельных файлах |
-| React-фронтенд | Vite + React, fetch API, live preview запроса |
+| HTTP Server | `net/http`, `http.ListenAndServe`, `http.ServeMux` |
+| Method-based Routing | `"POST /calculate"` using the Go 1.22+ pattern |
+| JSON Decode/Encode | `json.NewDecoder`, `json.NewEncoder` |
+| HTTP Status Codes | 200, 400, 405 |
+| Middleware Chain | `logging` → `CORS` → `handler` |
+| CORS | preflight `OPTIONS` + headers for the React dev server |
+| Separation of Concerns | handler / calculator / middleware split into separate files |
+| React Frontend | Vite + React, Fetch API, live request preview |
 
-### Стек
+### Stack
 
-- **Backend:** Go 1.22+, только стандартная библиотека
-- **Frontend:** React + Vite (без UI-фреймворков)
-- **Зависимости:** нет внешних Go-пакетов
+- **Backend:** Go 1.22+, standard library only
+- **Frontend:** React + Vite (no UI frameworks)
+- **Dependencies:** No external Go packages
 
 ---
 
-## Для разработчика
+## For the Developer
 
-### Структура
+### Structure
+
 
 ```
+
 http-calc/
-├── main.go          # точка входа: mux, регистрация хендлеров, запуск сервера
-├── handler.go       # HTTP-хендлер: decode → calculate → encode
-├── calculator.go    # бизнес-логика: calculate(a, op, b), ничего про HTTP
+├── main.go          # entry point: mux, handler registration, starting the server
+├── handler.go       # HTTP handler: decode → calculate → encode
+├── calculator.go    # business logic: calculate(a, op, b), completely decoupled from HTTP
 ├── middleware.go    # loggingMiddleware + corsMiddleware
-├── go.mod           # только module и go директивы
-├── frontend/        # React-приложение (Vite)
+├── go.mod           # contains only module and go directives
+├── frontend/        # React application (Vite)
 │   └── src/
-│       ├── App.jsx  # калькулятор UI
-│       └── App.css  # стили
+│       ├── App.jsx  # calculator UI
+│       └── App.css  # styles
 └── README.md
+
 ```
 
-### Архитектурные решения
+### Architectural Decisions
 
-#### Почему `net/http` без фреймворка?
+#### Why `net/http` without a framework?
 
-`gin` и `echo` — тонкие обёртки над `net/http`. Зная стандартную библиотеку, понимаешь что делает фреймворк. На собеседовании в BigTech спросят именно про `net/http`.
+`gin` and `echo` are thin wrappers around `net/http`. By knowing the standard library, you deeply understand what a framework does under the hood. Tech interviews at BigTech companies often focus explicitly on `net/http`.
 
-#### Почему middleware цепочка, а не один обработчик?
+#### Why a middleware chain instead of a single handler?
 
 ```go
 loggingMiddleware(corsMiddleware(mux))
+
 ```
 
-Каждый middleware отвечает за одно — принцип единственной ответственности. Легко добавить auth, rate-limit или tracing без изменения бизнес-логики.
+Each middleware handles a single task, adhering to the Single Responsibility Principle. This makes it effortless to plug in authentication, rate limiting, or tracing without altering the core business logic.
 
-#### Почему `*float64` в Response?
+#### Why `*float64` in the Response struct?
 
 ```go
 type Response struct {
     Result *float64 `json:"result,omitempty"`
     Error  string   `json:"error,omitempty"`
 }
+
 ```
 
-`omitempty` со значением `0.0` выкинет поле из JSON. Указатель позволяет отличить "результат равен нулю" от "поле не задано".
+The `omitempty` tag will omit the field from the JSON payload if the value is `0.0`. Using a pointer allows the application to distinguish between "the result is zero" and "the field was not provided/unset".
 
-### Запуск
+### Running the Project
 
-**Сервер:**
+**Server:**
+
 ```bash
 go run .
-# → сервер на :8080
+# → server running on :8080
+
 ```
 
-**Фронтенд:**
+**Frontend:**
+
 ```bash
 cd frontend
 npm install
 npm run dev
-# → открой http://localhost:5173
+# → open http://localhost:5173
+
 ```
 
 ### API
@@ -100,42 +109,46 @@ npm run dev
 POST /calculate
 Content-Type: application/json
 
-{"a": <число>, "op": "<оператор>", "b": <число>}
+{"a": <number>, "op": "<operator>", "b": <number>}
+
 ```
 
-**Операторы:** `+` `-` `*` `/`
+**Operators:** `+`, `-`, `*`, `/`
 
-### Примеры
+### Examples
 
 ```bash
-# Сложение
+# Addition
 curl -s -X POST http://localhost:8080/calculate \
   -H "Content-Type: application/json" \
   -d '{"a": 10, "op": "+", "b": 5}'
 # {"result":15}
 
-# Деление
+# Division
 curl -s -X POST http://localhost:8080/calculate \
   -d '{"a": 10, "op": "/", "b": 3}'
 # {"result":3.3333333333333335}
+
 ```
 
-### Обработка ошибок
+### Error Handling
 
 ```bash
-# Деление на ноль → HTTP 400
+# Division by zero → HTTP 400
 curl -s -X POST http://localhost:8080/calculate -d '{"a":10,"op":"/","b":0}'
-# {"error":"деление на ноль"}
+# {"error":"division by zero"}
 
-# Неизвестный оператор → HTTP 400
+# Unknown operator → HTTP 400
 curl -s -X POST http://localhost:8080/calculate -d '{"a":10,"op":"^","b":2}'
-# {"error":"неизвестный оператор: ^"}
+# {"error":"unknown operator: ^"}
 
-# Невалидный JSON → HTTP 400
+# Invalid JSON → HTTP 400
 curl -s -X POST http://localhost:8080/calculate -d 'not json'
-# {"error":"некорректный JSON"}
+# {"error":"invalid JSON"}
 
-# GET запрос → HTTP 405
+# GET request → HTTP 405
 curl -s -X GET http://localhost:8080/calculate
 # Method Not Allowed
+
 ```
+
