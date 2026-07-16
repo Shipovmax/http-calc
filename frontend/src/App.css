@@ -86,7 +86,7 @@ h1 {
   }
 }
 
-/* Chrome: скрываем стрелки у number input */
+/* Chrome: hide the spinner arrows on number inputs */
 .input::-webkit-inner-spin-button,
 .input::-webkit-outer-spin-button {
   -webkit-appearance: none;

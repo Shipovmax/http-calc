@@ -16,7 +16,7 @@ export default function App() {
     const numB = parseFloat(b)
 
     if (isNaN(numA) || isNaN(numB)) {
-      setError('Введи два числа')
+      setError('Enter two numbers')
       setResult(null)
       return
     }
@@ -38,7 +38,7 @@ export default function App() {
         setResult(data.result)
       }
     } catch {
-      setError('Сервер недоступен. Запусти: go run .')
+      setError('Server unavailable. Run: go run .')
     } finally {
       setLoading(false)
     }
@@ -53,15 +53,15 @@ export default function App() {
       <div className="card">
         <div className="card-header">
           <span className="badge">Go + React</span>
-          <h1>HTTP Калькулятор</h1>
-          <p className="subtitle">REST API на чистом net/http</p>
+          <h1>HTTP Calculator</h1>
+          <p className="subtitle">REST API on pure net/http</p>
         </div>
 
         <div className="inputs">
           <input
             className="input"
             type="number"
-            placeholder="Число A"
+            placeholder="Number A"
             value={a}
             onChange={e => setA(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -82,7 +82,7 @@ export default function App() {
           <input
             className="input"
             type="number"
-            placeholder="Число B"
+            placeholder="Number B"
             value={b}
             onChange={e => setB(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -94,12 +94,12 @@ export default function App() {
           onClick={handleCalculate}
           disabled={loading}
         >
-          {loading ? 'Считаю...' : 'Посчитать'}
+          {loading ? 'Calculating...' : 'Calculate'}
         </button>
 
         {result !== null && (
           <div className="result">
-            <span className="result-label">Результат</span>
+            <span className="result-label">Result</span>
             <span className="result-value">{result}</span>
           </div>
         )}

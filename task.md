@@ -1,10 +1,10 @@
 # Task #2 — HTTP Calculator
 
-## Цель
+## Goal
 
-Написать REST API-сервер на Go с React-фронтендом. Сервер принимает JSON-запрос с двумя числами и оператором, выполняет вычисление и возвращает JSON-ответ. Фронтенд предоставляет UI для взаимодействия с API через браузер.
+Write a REST API server in Go with a React frontend. The server accepts a JSON request with two numbers and an operator, performs the calculation, and returns a JSON response. The frontend provides a UI for interacting with the API through the browser.
 
-Главная учебная цель — освоить `net/http`: роутинг, JSON decode/encode, HTTP статус-коды, middleware. Это фундамент любого Go backend-сервиса.
+The main learning goal is to master `net/http`: routing, JSON decode/encode, HTTP status codes, middleware. This is the foundation of any Go backend service.
 
 ---
 
@@ -12,64 +12,64 @@
 
 - [x] `POST /calculate {"a":10,"op":"+","b":5}` → HTTP 200, `{"result":15}`
 - [x] `POST /calculate {"a":10,"op":"/","b":3}` → HTTP 200, `{"result":3.3333333333333335}`
-- [x] `POST /calculate {"a":10,"op":"/","b":0}` → HTTP 400, `{"error":"деление на ноль"}`
-- [x] `POST /calculate {"a":10,"op":"^","b":2}` → HTTP 400, `{"error":"неизвестный оператор: ^"}`
-- [x] `POST /calculate <невалидный JSON>` → HTTP 400, `{"error":"некорректный JSON"}`
+- [x] `POST /calculate {"a":10,"op":"/","b":0}` → HTTP 400, `{"error":"division by zero"}`
+- [x] `POST /calculate {"a":10,"op":"^","b":2}` → HTTP 400, `{"error":"unknown operator: ^"}`
+- [x] `POST /calculate <invalid JSON>` → HTTP 400, `{"error":"invalid JSON"}`
 - [x] `GET /calculate` → HTTP 405
-- [x] Каждый запрос логируется в stdout: метод, путь, статус, время выполнения
-- [x] CORS middleware для React dev-сервера (localhost:5173)
-- [x] `go vet ./...` проходит без предупреждений
-- [x] `go.mod` содержит только `module` и `go` директивы
-- [x] React-фронтенд с UI калькулятора, отправляет запросы к API
+- [x] Every request is logged to stdout: method, path, status, execution time
+- [x] CORS middleware for the React dev server (localhost:5173)
+- [x] `go vet ./...` passes without warnings
+- [x] `go.mod` contains only the `module` and `go` directives
+- [x] React frontend with a calculator UI that sends requests to the API
 
 ---
 
-## Технические требования
+## Technical Requirements
 
 ### Backend (Go)
 
-| Требование | Детали |
+| Requirement | Details |
 |---|---|
-| HTTP-сервер | `net/http`, `http.ListenAndServe(":8080", mux)` |
-| Роутер | `http.NewServeMux()` — не `DefaultServeMux` |
-| Метод | проверка через паттерн `"POST /calculate"` в Go 1.22+ |
-| JSON запрос | структура `Request{A float64, Op string, B float64}` |
-| JSON ответ (успех) | `{"result": <float64>}` |
-| JSON ответ (ошибка) | `{"error": "<сообщение>"}` |
-| HTTP статусы | 200 OK, 400 Bad Request, 405 Method Not Allowed |
-| Разбивка по файлам | `main.go`, `handler.go`, `calculator.go`, `middleware.go` |
-| Middleware цепочка | `loggingMiddleware(corsMiddleware(mux))` |
+| HTTP server | `net/http`, `http.ListenAndServe(":8080", mux)` |
+| Router | `http.NewServeMux()` — not `DefaultServeMux` |
+| Method | checked via the `"POST /calculate"` pattern in Go 1.22+ |
+| JSON request | `Request{A float64, Op string, B float64}` struct |
+| JSON response (success) | `{"result": <float64>}` |
+| JSON response (error) | `{"error": "<message>"}` |
+| HTTP statuses | 200 OK, 400 Bad Request, 405 Method Not Allowed |
+| File split | `main.go`, `handler.go`, `calculator.go`, `middleware.go` |
+| Middleware chain | `loggingMiddleware(corsMiddleware(mux))` |
 
 ### Frontend (React)
 
-| Требование | Детали |
+| Requirement | Details |
 |---|---|
-| Стек | Vite + React |
-| Поля ввода | два числовых инпута + выбор оператора |
-| Отправка | fetch POST на `http://localhost:8080/calculate` |
-| Отображение | результат или сообщение об ошибке |
-| Preview | живой preview JSON-запроса |
-| Дизайн | тёмная/светлая тема (prefers-color-scheme) |
+| Stack | Vite + React |
+| Input fields | two numeric inputs + operator selector |
+| Submission | fetch POST to `http://localhost:8080/calculate` |
+| Display | result or error message |
+| Preview | live preview of the JSON request |
+| Design | dark/light theme (prefers-color-scheme) |
 
-### Запрещено
+### Forbidden
 
-- `panic` для обработки ошибок — только `error` return + HTTP 400/500
-- Сторонние Go-пакеты (`gin`, `echo`, `chi`) — только `net/http`
-- Глобальный `http.DefaultServeMux`
-- `fmt.Println` в хендлерах — только в middleware
+- `panic` for error handling — only `error` return values + HTTP 400/500
+- Third-party Go packages (`gin`, `echo`, `chi`) — `net/http` only
+- The global `http.DefaultServeMux`
+- `fmt.Println` in handlers — only in middleware
 
 ---
 
-## Структура файлов
+## File Structure
 
 ```
 http-calc/
-├── main.go          # NewServeMux, регистрация хендлеров, ListenAndServe
+├── main.go          # NewServeMux, handler registration, ListenAndServe
 ├── handler.go       # calculateHandler: decode → calculate → encode
 ├── calculator.go    # func calculate(a float64, op string, b float64) (float64, error)
-├── middleware.go    # loggingMiddleware + corsMiddleware
+├── middleware.go     # loggingMiddleware + corsMiddleware
 ├── go.mod           # module github.com/Shipovmax/http-calc
-├── frontend/        # React-приложение
+├── frontend/        # React application
 │   └── src/
 │       ├── App.jsx
 │       └── App.css
@@ -80,13 +80,13 @@ http-calc/
 
 ## Definition of Done
 
-- [x] Все Acceptance Criteria выполнены
-- [x] Код запушен на GitHub, релиз v1.0.0 создан
-- [x] README.md актуален
-- [ ] Ты можешь объяснить каждую строку кода вслух без подглядывания
+- [x] All acceptance criteria met
+- [x] Code pushed to GitHub, release v1.0.0 created
+- [x] README.md up to date
+- [ ] You can explain every line of code out loud without looking
 
 ---
 
-## Следующий шаг после сдачи
+## Next Step After Submission
 
-После ревью переходим к **Task #3 — TODO CLI с файлами**: работа с файловой системой, `encoding/json` для персистентности, операции над слайсами структур.
+After review, moving on to **Task #3 — TODO CLI with files**: filesystem operations, `encoding/json` for persistence, operations on slices of structs.

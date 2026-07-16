@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
-// calculate выполняет арифметику и возвращает ошибку вместо паники
+// calculate performs the arithmetic operation op on a and b.
+// It returns an error instead of panicking on division by zero
+// or an unsupported operator.
 func calculate(a float64, op string, b float64) (float64, error) {
 	switch op {
 	case "+":
@@ -14,13 +16,13 @@ func calculate(a float64, op string, b float64) (float64, error) {
 	case "*":
 		return a * b, nil
 	case "/":
-		// деление на ноль — ошибка, а не паника
+		// division by zero is a domain error, not a panic
 		if b == 0 {
-			return 0, fmt.Errorf("деление на ноль")
+			return 0, fmt.Errorf("division by zero")
 		}
 		return a / b, nil
 	default:
-		// любой неизвестный оператор → сообщаем какой именно
-		return 0, fmt.Errorf("неизвестный оператор: %s", op)
+		// report the unsupported operator explicitly
+		return 0, fmt.Errorf("unknown operator: %s", op)
 	}
 }
