@@ -1,51 +1,51 @@
-import { useState } from 'react'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
 
-const OPERATORS = ['+', '-', '*', '/']
+const OPERATORS = ["+", "-", "*", "/"];
 
 export default function App() {
-  const [a, setA] = useState('')
-  const [b, setB] = useState('')
-  const [op, setOp] = useState('+')
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [a, setA] = useState("");
+  const [b, setB] = useState("");
+  const [op, setOp] = useState("+");
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleCalculate() {
-    const numA = parseFloat(a)
-    const numB = parseFloat(b)
+    const numA = parseFloat(a);
+    const numB = parseFloat(b);
 
     if (isNaN(numA) || isNaN(numB)) {
-      setError('Enter two numbers')
-      setResult(null)
-      return
+      setError("Enter two numbers");
+      setResult(null);
+      return;
     }
 
-    setLoading(true)
-    setError(null)
-    setResult(null)
+    setLoading(true);
+    setError(null);
+    setResult(null);
 
     try {
-      const res = await fetch('http://localhost:8080/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:8080/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ a: numA, op, b: numB }),
-      })
-      const data = await res.json()
+      });
+      const data = await res.json();
       if (data.error) {
-        setError(data.error)
+        setError(data.error);
       } else {
-        setResult(data.result)
+        setResult(data.result);
       }
     } catch {
-      setError('Server unavailable. Run: go run .')
+      setError("Server unavailable. Run: go run .");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter') handleCalculate()
+    if (e.key === "Enter") handleCalculate();
   }
 
   return (
@@ -63,15 +63,15 @@ export default function App() {
             type="number"
             placeholder="Number A"
             value={a}
-            onChange={e => setA(e.target.value)}
+            onChange={(e) => setA(e.target.value)}
             onKeyDown={handleKeyDown}
           />
 
           <div className="ops">
-            {OPERATORS.map(o => (
+            {OPERATORS.map((o) => (
               <button
                 key={o}
-                className={`op-btn ${op === o ? 'active' : ''}`}
+                className={`op-btn ${op === o ? "active" : ""}`}
                 onClick={() => setOp(o)}
               >
                 {o}
@@ -84,7 +84,7 @@ export default function App() {
             type="number"
             placeholder="Number B"
             value={b}
-            onChange={e => setB(e.target.value)}
+            onChange={(e) => setB(e.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
@@ -94,7 +94,7 @@ export default function App() {
           onClick={handleCalculate}
           disabled={loading}
         >
-          {loading ? 'Calculating...' : 'Calculate'}
+          {loading ? "Calculating..." : "Calculate"}
         </button>
 
         {result !== null && (
@@ -104,17 +104,13 @@ export default function App() {
           </div>
         )}
 
-        {error && (
-          <div className="error">
-            {error}
-          </div>
-        )}
+        {error && <div className="error">{error}</div>}
 
         <div className="request-preview">
           <span className="preview-label">POST /calculate</span>
-          <code>{`{"a":${a || '?'},"op":"${op}","b":${b || '?'}}`}</code>
+          <code>{`{"a":${a || "?"},"op":"${op}","b":${b || "?"}}`}</code>
         </div>
       </div>
     </div>
-  )
+  );
 }
